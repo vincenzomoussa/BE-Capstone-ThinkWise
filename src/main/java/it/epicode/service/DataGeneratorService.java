@@ -191,19 +191,19 @@ public class DataGeneratorService {
     private void generateSpese(int numSpese) {
         List<Spesa.CategoriaSpesa> categorie = List.of(Spesa.CategoriaSpesa.values());
         Map<Spesa.CategoriaSpesa, List<String>> descrizioni = Map.of(
-            Spesa.CategoriaSpesa.CANCELLERIA, List.of("Acquisto libri scolastici", "Acquisto lavagne multimediali", "Acquisto penne e quaderni"),
-            Spesa.CategoriaSpesa.COMMERCIALISTA, List.of("Pagamento fatture", "Compenso commercialista"),
-            Spesa.CategoriaSpesa.PULIZIA, List.of("Pulizia aule", "Sanificazione ambienti"),
-            Spesa.CategoriaSpesa.BOLLETTE, List.of("Pagamento bollette luce", "Pagamento bollette acqua"),
-            Spesa.CategoriaSpesa.MUTUO, List.of("Rata mutuo edificio scolastico"),
-            Spesa.CategoriaSpesa.CONTRIBUTI_INSEGNANTI, List.of("Pagamento stipendi insegnanti"),
+            Spesa.CategoriaSpesa.PERSONALE, List.of("Personale ATA", "Stipendi degli Insegnanti", "Stipendio Autisti"),
+            Spesa.CategoriaSpesa.MANUTENZIONE, List.of("Mantenimento infrastruttura", "Assistenza tecnica"),
+            Spesa.CategoriaSpesa.FORMAZIONE, List.of("Corsi di formazione", "Corsi di aggiornamento"),
+            Spesa.CategoriaSpesa.ASSICURAZIONE, List.of("Assicurazione studenti", "Assicurazione personale"),
+            Spesa.CategoriaSpesa.ATTREZZATURE, List.of("Rata prestito attrezzature", "Acquisto nuovi computer"),
+            Spesa.CategoriaSpesa.TRASPORTO, List.of("Mantenimento mezzi di trasporto", "Rimborso spese viaggio"),
             Spesa.CategoriaSpesa.ALTRO, List.of("Spesa generica")
         );
         for (int i = 0; i < numSpese; i++) {
             Spesa spesa = new Spesa();
             Spesa.CategoriaSpesa categoria = categorie.get(random.nextInt(categorie.size()));
             spesa.setCategoria(categoria);
-            double importo = random.nextInt(1000) + 1; // 1-1000
+            double importo = random.nextInt(3000) + 1; // 1-1000
             if (random.nextBoolean()) importo += 0.5;
             spesa.setImporto(importo);
             spesa.setDataSpesa(LocalDate.ofInstant(faker.date().past(1 * 365, TimeUnit.DAYS).toInstant(), ZoneId.systemDefault()));

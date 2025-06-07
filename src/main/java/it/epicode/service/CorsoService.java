@@ -162,26 +162,6 @@ public class CorsoService {
 
 
 
-	private void dividiCorso(Corso corso) {
-		List<Studente> studenti = new ArrayList<>(corso.getStudenti());
-
-		if (studenti.size() < 2) {
-			throw new IllegalArgumentException("Impossibile dividere un corso con meno di 2 studenti.");
-		}
-
-		int metà = studenti.size() / 2;
-
-		List<Studente> primoGruppo = new ArrayList<>(studenti.subList(0, metà));
-		List<Studente> secondoGruppo = new ArrayList<>(studenti.subList(metà, studenti.size()));
-
-		Corso corso1 = new Corso(corso, primoGruppo);
-		Corso corso2 = new Corso(corso, secondoGruppo);
-
-		corsoRepository.save(corso1);
-		corsoRepository.save(corso2);
-	}
-
-
 	public List<CorsoResponseDTO> getCorsiDisattivati() {
 		List<Corso> corsi = corsoRepository.findByAttivoFalse();
 		return corsi.stream().map(this::convertToResponseDTO).collect(Collectors.toList());

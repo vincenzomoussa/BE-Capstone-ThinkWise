@@ -71,8 +71,6 @@ Questa guida descrive come configurare correttamente il backend del progetto **T
 
 ---
 
-```
-  
-   ```
+[Link al Frontend](https://github.com/vincenzomoussa/FE-Capstone-ThinkWise)
 
 ---

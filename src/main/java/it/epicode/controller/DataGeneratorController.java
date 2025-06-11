@@ -18,7 +18,7 @@ public class DataGeneratorController {
 	@PostMapping
 	@PreAuthorize("hasRole('ROLE_ADMIN')")
 	public ResponseEntity<String> generateData() {
-		dataGeneratorService.generateAllData(5, 10, 50, 15, 30, 100);
+		dataGeneratorService.generateAllData(5, 5, 30, 10, 20, 100);
 		return ResponseEntity.ok("Dati generati con successo!");
 	}
 } 

@@ -18,6 +18,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -123,6 +124,29 @@ public class StudenteController {
 		// Recuperiamo lo studente dall'ID
 		Studente studente = studenteRepository.findById(id)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Studente non trovato"));
+
+		// --- Validazione: non puoi pagare mesi precedenti all'iscrizione ---
+		if (pagamentoRequestDTO.getMensilitaSaldata() != null) {
+			LocalDate iscrizione = studente.getDataIscrizione();
+			String[] parts = pagamentoRequestDTO.getMensilitaSaldata().split(" ");
+			if (parts.length == 2) {
+				String monthName = parts[0];
+				int year = Integer.parseInt(parts[1]);
+				java.time.Month meseEnum = null;
+				for (java.time.Month m : java.time.Month.values()) {
+					if (m.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.ITALIAN).equalsIgnoreCase(monthName)) {
+						meseEnum = m;
+						break;
+					}
+				}
+				if (meseEnum != null) {
+					LocalDate mensilita = LocalDate.of(year, meseEnum, 1);
+					if (mensilita.isBefore(iscrizione.withDayOfMonth(1))) {
+						throw new IllegalArgumentException("Non è possibile pagare un mese precedente alla data di iscrizione");
+					}
+				}
+			}
+		}
 
 		// Creiamo il nuovo pagamento
 		Pagamento nuovoPagamento = new Pagamento();

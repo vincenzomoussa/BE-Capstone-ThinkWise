@@ -89,14 +89,40 @@ public class ThinkBoardService {
 			));
 		}
 
-		long studentiConPagamentiMancanti = studenteRepository.findAll().stream()
-			.filter(s -> pagamentoRepository.findByStudenteId(s.getId()).isEmpty())
-			.count();
+		// Pagamenti mancanti: controlla ogni mese da iscrizione a oggi
+		List<it.epicode.entity.Studente> studentiNonInRegola = studenteRepository.findAll().stream()
+			.filter(studente -> {
+				LocalDate iscrizione = studente.getDataIscrizione();
+				LocalDate oggi = LocalDate.now();
+				List<Pagamento> pagamenti = pagamentoRepository.findByStudenteId(studente.getId());
 
-		if (studentiConPagamentiMancanti > 0) {
+				Set<String> mensilitaPagate = pagamenti.stream()
+					.map(Pagamento::getMensilitaSaldata)
+					.filter(Objects::nonNull)
+					.collect(Collectors.toSet());
+
+				// Per ogni mese da iscrizione a oggi, verifica che esista un pagamento
+				LocalDate data = iscrizione.withDayOfMonth(1);
+				LocalDate fine = oggi.withDayOfMonth(1);
+				while (!data.isAfter(fine)) {
+					String nomeMese = data.getMonth().getDisplayName(java.time.format.TextStyle.FULL, Locale.ITALIAN);
+					String mensilita = nomeMese + " " + data.getYear();
+					if (!mensilitaPagate.contains(mensilita)) {
+						return true; // manca almeno un pagamento
+					}
+					data = data.plusMonths(1);
+				}
+				return false; // tutti i mesi pagati
+			})
+			.collect(Collectors.toList());
+
+		if (!studentiNonInRegola.isEmpty()) {
+			String nomi = studentiNonInRegola.stream()
+				.map(s -> s.getNome() + " " + s.getCognome())
+				.collect(Collectors.joining(", "));
 			avvisi.add(Map.of(
-				"messaggio",  studentiConPagamentiMancanti + " studenti non hanno ancora effettuato alcun pagamento.",
-				"link", "/studenti"
+				"messaggio", nomi + (studentiNonInRegola.size() == 1 ? " non è in regola con i pagamenti." : " non sono in regola con i pagamenti."),
+				"link", "/pagamenti"
 			));
 		}
 

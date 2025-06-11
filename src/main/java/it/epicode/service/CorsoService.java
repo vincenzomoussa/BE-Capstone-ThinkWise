@@ -244,4 +244,16 @@ public class CorsoService {
 		return dto;
 	}
 
+	public List<CorsoResponseDTO> getAllCorsi() {
+		return corsoRepository.findAll().stream()
+			.map(this::convertToResponseDTO)
+			.collect(Collectors.toList());
+	}
+
+	public List<CorsoResponseDTO> getAllCorsiByInsegnante(Long insegnanteId) {
+		return corsoRepository.findByInsegnanteId(insegnanteId).stream()
+			.map(this::convertToResponseDTO)
+			.collect(Collectors.toList());
+	}
+
 }

@@ -142,4 +142,16 @@ public class CorsoController {
 		corsoService.aggiungiStudente(id, studenteRequestDTO.getStudenteId());
 		return ResponseEntity.ok("Studente assegnato al corso con successo.");
 	}
+
+	@GetMapping("/all")
+	@PreAuthorize("hasRole('ROLE_ADMIN')")
+	public ResponseEntity<List<CorsoResponseDTO>> getAllCorsi() {
+		return ResponseEntity.ok(corsoService.getAllCorsi());
+	}
+
+	@GetMapping("/all/insegnante/{id}")
+	@PreAuthorize("hasRole('ROLE_ADMIN')")
+	public ResponseEntity<List<CorsoResponseDTO>> getAllCorsiByInsegnante(@PathVariable Long id) {
+		return ResponseEntity.ok(corsoService.getAllCorsiByInsegnante(id));
+	}
 }

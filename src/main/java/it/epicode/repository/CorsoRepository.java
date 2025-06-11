@@ -21,4 +21,5 @@ public interface CorsoRepository extends JpaRepository<Corso, Long> {
     List<Corso> findByTipoCorso(TipoCorso tipoCorso);
     List<Corso> findByTipoCorsoAndAttivoTrue(TipoCorso tipoCorso);
     List<Corso> findByTipoCorsoAndAttivo(TipoCorso tipoCorso, boolean attivo);
+    List<Corso> findByInsegnanteId(Long insegnanteId);
 }

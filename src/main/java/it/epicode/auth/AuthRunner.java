@@ -24,7 +24,7 @@ public class AuthRunner implements ApplicationRunner {
     private void createAdminUser() {
         Optional<AppUser> adminUser = appUserService.findByUsername("admin");
         if (adminUser.isEmpty()) {
-            appUserService.registerUser("admin", "admin@mail.com", "adminpwd", Role.ROLE_ADMIN);
+            appUserService.registerUser("admin", "vincenzomoussa@gmail.com", "adminpwd", Role.ROLE_ADMIN);
             System.out.println("✅ Utente Admin creato con successo!");
         }
     }

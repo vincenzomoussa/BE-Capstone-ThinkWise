@@ -12,6 +12,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,10 +28,31 @@ public class PagamentoService {
 		Studente studente = studenteRepository.findById(requestDTO.getStudenteId())
 			.orElseThrow(() -> new EntityNotFoundException("Studente non trovato con ID: " + requestDTO.getStudenteId()));
 
+		if (requestDTO.getMensilitaSaldata() != null) {
+			LocalDate iscrizione = studente.getDataIscrizione();
+			String[] parts = requestDTO.getMensilitaSaldata().split(" ");
+			if (parts.length == 2) {
+				String monthName = parts[0];
+				int year = Integer.parseInt(parts[1]);
+				java.time.Month meseEnum = null;
+				for (java.time.Month m : java.time.Month.values()) {
+					if (m.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.ITALIAN).equalsIgnoreCase(monthName)) {
+						meseEnum = m;
+						break;
+					}
+				}
+				if (meseEnum != null) {
+					LocalDate mensilita = LocalDate.of(year, meseEnum, 1);
+					if (mensilita.isBefore(iscrizione.withDayOfMonth(1))) {
+						throw new IllegalArgumentException("Non è possibile pagare un mese precedente alla data di iscrizione");
+					}
+				}
+			}
+		}
+
 		Pagamento pagamento = new Pagamento();
 		BeanUtils.copyProperties(requestDTO, pagamento);
 		pagamento.setStudente(studente);
-
 
 		pagamentoRepository.save(pagamento);
 		return convertToResponseDTO(pagamento);

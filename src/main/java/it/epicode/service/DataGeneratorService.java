@@ -164,7 +164,14 @@ public class DataGeneratorService {
                 corso.setSecondoOrario(secondoOrario);
             }
             // Aula e capienza
-            Aula aula = aule.get(random.nextInt(aule.size()));
+            Aula aula;
+            if (corso.getTipoCorso() == TipoCorso.DI_GRUPPO) {
+                List<Aula> auleGruppo = aule.stream().filter(a -> a.getCapienzaMax() >= 2).collect(Collectors.toList());
+                if (auleGruppo.isEmpty()) continue; // Nessuna aula adatta, salta questo corso
+                aula = auleGruppo.get(random.nextInt(auleGruppo.size()));
+            } else {
+                aula = aule.get(random.nextInt(aule.size()));
+            }
             corso.setAula(aula);
             // Insegnante compatibile
             List<Insegnante> compatibili = insegnanti.stream().filter(ins -> ins.getSpecializzazioni().contains(CorsoTipo.valueOf(corsoTipo))).collect(Collectors.toList());
@@ -175,11 +182,19 @@ public class DataGeneratorService {
             // Studenti compatibili (preferenze, giorno, orario)
             List<Studente> compatibiliStudenti = studenti.stream().filter(s ->
                 s.getPreferenzaCorso().contains(CorsoTipo.valueOf(corsoTipo)) &&
-                (s.getGiorniPreferiti().contains(giorno) || (corso.getSecondoGiorno() != null && s.getGiorniPreferiti().contains(corso.getSecondoGiorno()))) &&
-                (s.getFasceOrariePreferite().contains(orario) || (corso.getSecondoOrario() != null && s.getFasceOrariePreferite().contains(corso.getSecondoOrario())))
+                s.getGiorniPreferiti().contains(giorno) &&
+                s.getFasceOrariePreferite().contains(orario) &&
+                (corso.getSecondoGiorno() == null || corso.getSecondoOrario() == null ||
+                  (s.getGiorniPreferiti().contains(corso.getSecondoGiorno()) && s.getFasceOrariePreferite().contains(corso.getSecondoOrario()))
+                )
             ).collect(Collectors.toList());
             Collections.shuffle(compatibiliStudenti, random);
-            int maxStudenti = Math.min(aula.getCapienzaMax(), compatibiliStudenti.size());
+            int maxStudenti;
+            if (corso.getTipoCorso() == TipoCorso.INDIVIDUALE) {
+                maxStudenti = Math.min(1, compatibiliStudenti.size());
+            } else {
+                maxStudenti = Math.min(aula.getCapienzaMax(), compatibiliStudenti.size());
+            }
             int numStudentiCorso = maxStudenti == 0 ? 0 : random.nextInt(maxStudenti) + 1;
             corso.setStudenti(compatibiliStudenti.subList(0, numStudentiCorso));
             corsoRepository.save(corso);
@@ -216,25 +231,34 @@ public class DataGeneratorService {
     private void generatePagamenti(List<Studente> studenti) {
         List<MetodoPagamento> metodi = List.of(MetodoPagamento.values());
         List<String> mensilita = List.of("Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre");
-        int currentYear = LocalDate.now().getYear();
         double totaleSpese = spesaRepository.findAll().stream().mapToDouble(Spesa::getImporto).sum();
         double totalePagamenti = 0;
+        LocalDate oggi = LocalDate.now();
         for (Studente studente : studenti) {
-            for (String mese : mensilita) {
+            LocalDate iscrizione = studente.getDataIscrizione();
+            LocalDate data = iscrizione.withDayOfMonth(1);
+            LocalDate fine = oggi.withDayOfMonth(1);
+            while (!data.isAfter(fine)) {
                 Pagamento pagamento = new Pagamento();
                 pagamento.setStudente(studente);
                 pagamento.setImporto(150.0);
-                pagamento.setDataPagamento(LocalDate.of(currentYear, mensilita.indexOf(mese) + 1, random.nextInt(28) + 1));
-                pagamento.setMensilitaSaldata(mese + " " + currentYear);
+                // Data pagamento casuale nel mese
+                int giorno = Math.min(data.lengthOfMonth(), random.nextInt(data.lengthOfMonth()) + 1);
+                pagamento.setDataPagamento(LocalDate.of(data.getYear(), data.getMonthValue(), giorno));
+                // Usa lo stesso formato del controllo: mese minuscolo
+                String nomeMese = data.getMonth().getDisplayName(java.time.format.TextStyle.FULL, Locale.ITALIAN);
+                String mensilitaSaldata = nomeMese + " " + data.getYear();
+                pagamento.setMensilitaSaldata(mensilitaSaldata);
                 pagamento.setNumeroRicevuta(faker.number().digits(8));
                 pagamento.setMetodoPagamento(metodi.get(random.nextInt(metodi.size())));
-                pagamento.setNote("Pagamento mensile corso");
+                pagamento.setNote("Pagamento retta accademica " + mensilitaSaldata);
                 pagamentoRepository.save(pagamento);
                 totalePagamenti += 150.0;
+                data = data.plusMonths(1);
             }
         }
         // Se necessario, aggiungi pagamenti extra per garantire plusvalenza
-        while (totalePagamenti <= totaleSpese) {
+        while (totalePagamenti <= totaleSpese && !studenti.isEmpty()) {
             Pagamento extra = new Pagamento();
             Studente studente = studenti.get(random.nextInt(studenti.size()));
             extra.setStudente(studente);
